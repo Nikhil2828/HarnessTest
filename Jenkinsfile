@@ -1,48 +1,58 @@
 pipeline {
     agent any
-   
+
     environment {
+        DOCKERHUB_USER = "nganta0102"
         IMAGE_NAME = "cicd-demo"
-        IMAGE_TAG = "1.0.${BUILD_NUMBER}"
+        IMAGE_TAG = "${BUILD_NUMBER}"
         RELEASE_NAME = "cicd-demo"
         CHART_PATH = "./cicd-demo-chart"
     }
 
     stages {
-        stage('Checkout') {
-            steps {
-                echo 'Checking out source code'
-            }
-        }
-
-        stage('Build Docker Image') {
+        stage('Build Image') {
             steps {
                 sh """
-                docker build -t ${IMAGE_NAME}:${IMAGE_TAG} .
-		docker tag ${IMAGE_NAME}:${IMAGE_TAG} ${IMAGE_NAME}:latest
-		"""
-	     }
+                docker build -t $DOCKERHUB_USER/$IMAGE_NAME:$IMAGE_TAG .
+                docker tag $DOCKERHUB_USER/$IMAGE_NAME:$IMAGE_TAG $DOCKERHUB_USER/$IMAGE_NAME:latest
+                """
+            }
         }
 
-	stage('Helm Deploy to Kubernetes') {
-	    steps {
-		sh """
-		helm upgrade --install ${RELEASE_NAME} ${CHART_PATH} \
-		  --set image.repository=${IMAGE_NAME} \
-                  --set image.tag=latest \
-		  --set image.pullPolicy=IfNotPresent
-		"""
+        stage('Push Image') {
+            steps {
+                withCredentials([usernamePassword(
+                    credentialsId: 'dockerhub-creds',
+                    usernameVariable: 'DOCKER_USER',
+                    passwordVariable: 'DOCKER_PASS'
+                )]) {
+                    sh """
+                    echo $DOCKER_PASS | docker login -u $DOCKER_USER --password-stdin
+                    docker push $DOCKERHUB_USER/$IMAGE_NAME:$IMAGE_TAG
+                    docker push $DOCKERHUB_USER/$IMAGE_NAME:latest
+                    """
+                }
             }
-	}
+        }
 
-	stage('Verify Deployment') {
-	   steps { 
-	       sh """
-	       kubectl get pods
-	       kubectl get svc
-	       """
-           }
- 	}
-     }
-  }
+        stage('Deploy Dev') {
+            steps {
+                sh """
+                helm upgrade --install $RELEASE_NAME-dev $CHART_PATH \
+                  -f $CHART_PATH/values-dev.yaml \
+                  --set image.repository=$DOCKERHUB_USER/$IMAGE_NAME \
+                  --set image.tag=$IMAGE_TAG
+                """
+            }
+        }
 
+        stage('Verify') {
+            steps {
+                sh """
+                kubectl get pods
+                kubectl get svc
+                """
+            }
+        }
+    }
+}
