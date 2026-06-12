@@ -10,7 +10,16 @@ pipeline {
     }
 
     stages {
-        stage('Build Image') {
+        
+	stage('Debug Workspace') {
+ 	    steps {
+                sh """
+                pwd
+                ls -la
+                """
+    	    }
+        }
+	stage('Build Image') {
             steps {
                 sh """
                 docker build -t $DOCKERHUB_USER/$IMAGE_NAME:$IMAGE_TAG .
