@@ -10,3 +10,6 @@ service:
   port: 80
 
 containerPort: 5000
+
+livenessProbe: null
+readinessProbe: null
