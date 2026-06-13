@@ -1,17 +1,12 @@
-FROM jenkins/jenkins:lts
+FROM python:3.11-slim
 
-USER root
+WORKDIR /app
 
-RUN apt-get update && apt-get install -y \
-    docker.io \
-    curl \
-    unzip \
-    && rm -rf /var/lib/apt/lists/*
+COPY requirements.txt .
+RUN pip install -r requirements.txt
 
-RUN curl -LO "https://dl.k8s.io/release/v1.33.0/bin/linux/amd64/kubectl" \
-    && chmod +x kubectl \
-    && mv kubectl /usr/local/bin/kubectl
+COPY app.py .
 
-RUN curl https://raw.githubusercontent.com/helm/helm/main/scripts/get-helm-3 | bash
+EXPOSE 5000
 
-USER jenkins
+CMD ["python", "app.py"]
