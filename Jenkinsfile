@@ -57,7 +57,7 @@ pipeline {
         stage('Deploy QA') {
             steps {
                 sh """
-                helm upgrade --install $RELEASE_NAME-dev $CHART_PATH \
+                helm upgrade --install $RELEASE_NAME-qa $CHART_PATH \
                   -f $CHART_PATH/values-qa.yaml \
                   --set image.repository=$DOCKERHUB_USER/$IMAGE_NAME \
                   --set image.tag=$IMAGE_TAG
@@ -68,7 +68,7 @@ pipeline {
 	stage('Deploy Prod') {
             steps {
                 sh """
-                helm upgrade --install $RELEASE_NAME-dev $CHART_PATH \
+                helm upgrade --install $RELEASE_NAME-prod $CHART_PATH \
                   -f $CHART_PATH/values-prod.yaml \
                   --set image.repository=$DOCKERHUB_USER/$IMAGE_NAME \
                   --set image.tag=$IMAGE_TAG

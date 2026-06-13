@@ -11,5 +11,3 @@ service:
 
 containerPort: 5000
 
-livenessProbe: null
-readinessProbe: null
