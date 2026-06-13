@@ -54,6 +54,27 @@ pipeline {
                 """
             }
         }
+        stage('Deploy QA') {
+            steps {
+                sh """
+                helm upgrade --install $RELEASE_NAME-dev $CHART_PATH \
+                  -f $CHART_PATH/values-qa.yaml \
+                  --set image.repository=$DOCKERHUB_USER/$IMAGE_NAME \
+                  --set image.tag=$IMAGE_TAG
+                """
+            }
+        }
+
+	stage('Deploy Prod') {
+            steps {
+                sh """
+                helm upgrade --install $RELEASE_NAME-dev $CHART_PATH \
+                  -f $CHART_PATH/values-prod.yaml \
+                  --set image.repository=$DOCKERHUB_USER/$IMAGE_NAME \
+                  --set image.tag=$IMAGE_TAG
+                """
+            }
+        }
 
         stage('Verify') {
             steps {
